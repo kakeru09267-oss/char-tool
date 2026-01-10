@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>キャラクター管理ツール (GitHub Ver.)</title>
+    <style>
+        :root {
+            --bg: #1a1a1a;
+            --card: #2b2b2b;
+            --accent: #ff4500;
+            --text: #e0e0e0;
+            --border: 2px solid #444;
+        }
+        body { font-family: sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; }
+        .user-header { text-align: center; margin-bottom: 30px; }
+        .user-icon { width: 100px; height: 100px; background: #444; border: var(--border); display: block; margin: 0 auto 10px; image-rendering: pixelated; object-fit: cover; }
+        .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .char-card { background: var(--card); border: var(--border); padding: 15px; }
+        .char-info { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
+        .char-icon { width: 60px; height: 60px; border: 1px solid #555; background: #333; image-rendering: pixelated; object-fit: cover; }
+        .heart-gauge { display: flex; gap: 5px; margin: 10px 0; }
+        .heart-btn { background: none; border: none; font-size: 24px; cursor: pointer; filter: grayscale(1); opacity: 0.3; }
+        .heart-btn.active { filter: grayscale(0); opacity: 1; }
+        input[type="text"], textarea, select { width: 100%; background: #1a1a1a; color: #fff; border: 1px solid #555; padding: 8px; box-sizing: border-box; }
+        details { border: 1px solid #444; background: #222; margin-top: 10px; padding: 10px; }
+        summary { cursor: pointer; color: var(--accent); font-weight: bold; }
+        .checkbox-list { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px 0; }
+        .btn-save { display: block; width: 100%; padding: 15px; background: var(--accent); color: #fff; font-weight: bold; border: none; cursor: pointer; margin-top: 30px; }
+        .btn-save:disabled { background: #666; cursor: not-allowed; }
+        .deadline { text-align: right; color: var(--accent); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="user-header">
+        <img src="via.placeholder.com" class="user-icon">
+        <h2>ABCDE</h2>
+        <p class="deadline">期日：2025/1/12 21:00まで</p>
+    </div>
+
+    <div id="charGrid" class="char-grid"></div>
+
+    <div style="margin-top: 40px; border-top: 2px solid var(--accent); padding-top: 20px;">
+        <p>● この人のことは庇える（複数可）</p>
+        <details><summary>名前一覧を表示する</summary><div id="protectSelect" class="checkbox-list"></div></details>
+        <p>● この人を狙うかも（複数可）</p>
+        <details><summary>名前一覧を表示する</summary><div id="targetSelect" class="checkbox-list"></div></details>
+        <p>● この人がいなくなったらやばい（1名）</p>
+        <select id="criticalChar"><option value="">選択してください</option></select>
+        <p>● 現在の心情や状況など伝えたいこと</p>
+        <textarea id="freeNote" rows="4"></textarea>
+        <button class="btn-save" id="submitBtn" onclick="submitData()">スプレッドシートへ送信</button>
+    </div>
+
+<script>
+    const characters = [
+        {name: "ファースト", job: "ロボット", img: "via.placeholder.com"},
+        {name: "あいうえお", job: "探偵", img: "via.placeholder.com"},
+        {name: "かきくけこ", job: "幸運", img: "via.placeholder.com"},
+        {name: "さしすせそ", job: "野球部", img: "via.placeholder.com"},
+        {name: "たちつてと", job: "アイドル", img: "via.placeholder.com"},
+        {name: "なにぬねの", job: "小説家", img: "via.placeholder.com"},
+        {name: "はひふへほ", job: "御囚司", img: "via.placeholder.com"},
+        {name: "まみむめも", job: "保健委員", img: "via.placeholder.com"},
+        {name: "やゆよ", job: "占い師", img: "via.placeholder.com"},
+        {name: "らりるれろ", job: "プログラマー", img: "via.placeholder.com0"},
+        {name: "わおん", job: "風紀委員", img: "via.placeholder.com1"}
+    ];
+
+    function init() {
+        const grid = document.getElementById('charGrid');
+        const protect = document.getElementById('protectSelect');
+        const target = document.getElementById('targetSelect');
+        const critical = document.getElementById('criticalChar');
+
+        // GitHub Pagesのドメインで永続保存されるデータ
+        const savedStats = JSON.parse(localStorage.getItem('saved_char_stats') || '{}');
+
+        characters.forEach((char, idx) => {
+            const data = savedStats[char.name] || { hearts: 3, comment: "" };
+            
+            let heartsHtml = '';
+            for(let i=1; i<=5; i++) {
+                const activeClass = i <= data.hearts ? 'active' : '';
+                heartsHtml += `<button class="heart-btn ${activeClass}" onclick="setHeart(${idx}, ${i})">❤️</button>`;
+            }
+
+            grid.innerHTML += `
+                <div class="char-card">
+                    <div class="char-info">
+                        <img src="${char.img}" class="char-icon">
+                        <div>
+                            <div style="font-weight:bold;">${char.name}</div>
+                            <div style="font-size:0.8em; color:#888;">${char.job}</div>
+                        </div>
+                    </div>
+                    <div class="heart-gauge" id="gauge-${idx}" data-value="${data.hearts}">${heartsHtml}</div>
+                    <input type="text" id="comm-${idx}" value="${data.comment || ''}" placeholder="一言コメント" oninput="saveCurrentData()">
+                </div>`;
+
+            const cb = (type) => {
+                const isChecked = (localStorage.getItem('checked_'+type) || "").split(',').includes(char.name);
+                return `<label style="margin-right:10px;"><input type="checkbox" name="${type}" value="${char.name}" ${isChecked ? "checked" : ""} onchange="saveCurrentData()"> ${char.name}</label>`;
+            };
+            protect.innerHTML += cb('protect');
+            target.innerHTML += cb('target');
+            critical.innerHTML += `<option value="${char.name}" ${localStorage.getItem('critical') === char.name ? 'selected' : ''}>${char.name}</option>`;
+        });
+
+        document.getElementById('freeNote').value = localStorage.getItem('freeNote') || "";
+        critical.onchange = saveCurrentData;
+        document.getElementById('freeNote').oninput = saveCurrentData;
+    }
+
+    function setHeart(idx, val) {
+        const gauge = document.getElementById('gauge-'+idx);
+        gauge.dataset.value = val;
+        const btns = gauge.querySelectorAll('.heart-btn');
+        btns.forEach((b, i) => b.classList.toggle('active', i < val));
+        saveCurrentData();
+    }
+
+    function saveCurrentData() {
+        const dataMap = {};
+        characters.forEach((c, idx) => {
+            dataMap[c.name] = {
+                hearts: document.getElementById('gauge-'+idx).dataset.value,
+                comment: document.getElementById('comm-'+idx).value
+            };
+        });
+        localStorage.setItem('saved_char_stats', JSON.stringify(dataMap));
+        localStorage.setItem('checked_protect', Array.from(document.querySelectorAll('input[name="protect"]:checked')).map(el => el.value).join(','));
+        localStorage.setItem('checked_target', Array.from(document.querySelectorAll('input[name="target"]:checked')).map(el => el.value).join(','));
+        localStorage.setItem('critical', document.getElementById('criticalChar').value);
+        localStorage.setItem('freeNote', document.getElementById('freeNote').value);
+    }
+
+    async function submitData() {
+        const btn = document.getElementById('submitBtn');
+        btn.innerText = "送信中...";
+        btn.disabled = true;
+
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyPbjT11UkxVNJEz6g_NGLW-5dOLlhRX2OurY1bDgvhn4KuGqip72dDiT5lEImCpAfY/exec";
+        
+        const charData = characters.map((c, idx) => ({
+            name: c.name,
+            hearts: document.getElementById('gauge-'+idx).dataset.value,
+            comment: document.getElementById('comm-'+idx).value
+        }));
+
+        const data = {
+            user: "ABCDE",
+            timestamp: new Date().toLocaleString('ja-JP'),
+            characters: charData,
+            canProtect: (localStorage.getItem('checked_protect') || "").split(',').filter(v => v),
+            mayTarget: (localStorage.getItem('checked_target') || "").split(',').filter(v => v),
+            critical: document.getElementById('criticalChar').value,
+            note: document.getElementById('freeNote').value
+        };
+
+        try {
+            await fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(data) });
+            alert("送信に成功しました！");
+        } catch (e) {
+            alert("送信エラーが発生しました。");
+        } finally {
+            btn.innerText = "スプレッドシートへ送信";
+            btn.disabled = false;
+        }
+    }
+    window.onload = init;
+</script>
+</body>
+</html>
