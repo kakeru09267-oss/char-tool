@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>キャラクター管理ツール</title>
     <style>
         :root {
@@ -17,10 +18,10 @@
         .setup-section { text-align: center; padding: 40px 20px; border: var(--border); background: var(--card); margin-bottom: 20px; }
         .setup-section input { width: 80%; max-width: 300px; font-size: 1.2em; text-align: center; margin-bottom: 20px; }
         
-        .header { text-align: center; margin-bottom: 30px; display: none; } /* 初期は非表示 */
+        .header { text-align: center; margin-bottom: 30px; display: none; }
         .user-icon { width: 80px; height: 80px; background: #444; border: var(--border); display: block; margin: 0 auto 10px; image-rendering: pixelated; object-fit: cover; }
         
-        .main-content { display: none; } /* 名前決定まで非表示 */
+        .main-content { display: none; }
         
         .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin: 20px 0; }
         .char-card { background: var(--card); border: var(--border); padding: 10px; display: flex; flex-direction: column; align-items: center; }
@@ -37,8 +38,13 @@
         .checkbox-list { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0; }
         
         .btn-save { display: block; width: 100%; padding: 15px; background: var(--accent); color: #fff; font-weight: bold; border: none; cursor: pointer; margin-top: 30px; }
-        .btn-save:disabled { background: #666; }
+        .btn-save:disabled { background: #666; cursor: wait; }
         .deadline { text-align: right; color: var(--accent); font-weight: bold; font-size: 0.8em; }
+
+        /* カスタムアラート */
+        #customAlert { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; }
+        .alert-box { background: var(--card); border: 2px solid var(--accent); padding: 30px; text-align: center; width: 80%; max-width: 300px; box-shadow: 0 0 20px rgba(255, 69, 0, 0.4); }
+        .alert-btn { background: var(--accent); color: white; border: none; padding: 10px 30px; font-weight: bold; cursor: pointer; margin-top: 20px; }
 
         @media (max-width: 600px) {
             .char-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -60,7 +66,7 @@
             <img src="via.placeholder.com" class="user-icon">
             <h2 id="displayName">---</h2>
             <p class="deadline">〆切：2025/1/12 21:00</p>
-            <button onclick="resetUser()" style="background:none; border:none; color:#888; font-size:0.7em; cursor:pointer;">[名前を変更する]</button>
+            <button onclick="resetUser()" style="background:none; border:none; color:#888; font-size:0.7em; cursor:pointer;">[名前を変更・リセット]</button>
         </div>
 
         <div id="charGrid" class="char-grid"></div>
@@ -78,8 +84,15 @@
         </div>
     </div>
 
+    <!-- カスタム通知ダイアログ -->
+    <div id="customAlert">
+        <div class="alert-box">
+            <p id="alertMessage" style="font-weight:bold;"></p>
+            <button class="alert-btn" onclick="closeAlert()">OK</button>
+        </div>
+    </div>
+
 <script>
-    // 全メンバーリスト
     const allMembers = [
         {name: "ファースト", job: "ロボット", img: "via.placeholder.com"},
         {name: "あいうえお", job: "探偵", img: "via.placeholder.com"},
@@ -96,10 +109,18 @@
 
     let myName = localStorage.getItem('app_user_name');
 
+    // カスタム通知
+    function showAppAlert(msg) {
+        document.getElementById('alertMessage').innerText = msg;
+        document.getElementById('customAlert').style.display = 'flex';
+    }
+    function closeAlert() {
+        document.getElementById('customAlert').style.display = 'none';
+    }
+
     function startTool() {
         const input = document.getElementById('myInputName').value.trim();
-        if(!input) return alert("名前を入力してください");
-        
+        if(!input) return showAppAlert("名前を入力してください");
         myName = input;
         localStorage.setItem('app_user_name', myName);
         renderTool();
@@ -127,8 +148,6 @@
         critical.innerHTML = '<option value="">選択してください</option>';
 
         const savedStats = JSON.parse(localStorage.getItem('stats_'+myName) || '{}');
-
-        // 自分以外のメンバーを抽出
         const others = allMembers.filter(m => m.name !== myName);
 
         others.forEach((char, idx) => {
@@ -141,11 +160,9 @@
             grid.innerHTML += `
                 <div class="char-card">
                     <img src="${char.img}" class="char-icon">
-                    <div class="char-info">
-                        <div style="font-weight:bold; font-size:0.9em;">${char.name}</div>
-                    </div>
+                    <div style="font-weight:bold; font-size:0.9em; margin-bottom:5px;">${char.name}</div>
                     <div class="heart-gauge" id="gauge-${char.name}" data-value="${data.hearts}">${heartsHtml}</div>
-                    <input type="text" id="comm-${char.name}" value="${data.comment}" placeholder="一言" oninput="saveCurrentData()">
+                    <input type="text" id="comm-${char.name}" value="${data.comment || ''}" placeholder="一言" oninput="saveCurrentData()">
                 </div>`;
 
             const cb = (type) => {
@@ -175,9 +192,7 @@
         allMembers.forEach(c => {
             const g = document.getElementById('gauge-'+c.name);
             const m = document.getElementById('comm-'+c.name);
-            if(g && m) {
-                dataMap[c.name] = { hearts: g.dataset.value, comment: m.value };
-            }
+            if(g && m) dataMap[c.name] = { hearts: g.dataset.value, comment: m.value };
         });
         localStorage.setItem('stats_'+myName, JSON.stringify(dataMap));
         localStorage.setItem('checked_protect_'+myName, Array.from(document.querySelectorAll('input[name="protect"]:checked')).map(el => el.value).join(','));
@@ -190,8 +205,7 @@
         const btn = document.getElementById('submitBtn');
         btn.innerText = "送信中..."; btn.disabled = true;
 
-        const GAS_URL = "script.google.com";
-        
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyPbjT11UkxVNJEz6g_NGLW-5dOLlhRX2OurY1bDgvhn4KuGqip72dDiT5lEImCpAfY/exec";
         const others = allMembers.filter(m => m.name !== myName);
         const charData = others.map(c => ({
             name: c.name,
@@ -211,8 +225,8 @@
 
         try {
             await fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(data) });
-            alert("送信に成功しました！");
-        } catch (e) { alert("エラーが発生しました"); }
+            showAppAlert("送信に成功しました！");
+        } catch (e) { showAppAlert("エラーが発生しました"); }
         finally { btn.innerText = "スプレッドシートへ送信"; btn.disabled = false; }
     }
 
