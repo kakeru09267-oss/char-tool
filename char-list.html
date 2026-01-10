@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>キャラクター管理ツール (GitHub Ver.)</title>
+    <title>キャラクター管理ツール</title>
     <style>
         :root {
             --bg: #1a1a1a;
@@ -11,49 +11,76 @@
             --text: #e0e0e0;
             --border: 2px solid #444;
         }
-        body { font-family: sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; }
-        .user-header { text-align: center; margin-bottom: 30px; }
-        .user-icon { width: 100px; height: 100px; background: #444; border: var(--border); display: block; margin: 0 auto 10px; image-rendering: pixelated; object-fit: cover; }
-        .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .char-card { background: var(--card); border: var(--border); padding: 15px; }
-        .char-info { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
-        .char-icon { width: 60px; height: 60px; border: 1px solid #555; background: #333; image-rendering: pixelated; object-fit: cover; }
-        .heart-gauge { display: flex; gap: 5px; margin: 10px 0; }
-        .heart-btn { background: none; border: none; font-size: 24px; cursor: pointer; filter: grayscale(1); opacity: 0.3; }
+        body { font-family: sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; max-width: 800px; margin: auto; }
+        
+        /* 名前入力セクション */
+        .setup-section { text-align: center; padding: 40px 20px; border: var(--border); background: var(--card); margin-bottom: 20px; }
+        .setup-section input { width: 80%; max-width: 300px; font-size: 1.2em; text-align: center; margin-bottom: 20px; }
+        
+        .header { text-align: center; margin-bottom: 30px; display: none; } /* 初期は非表示 */
+        .user-icon { width: 80px; height: 80px; background: #444; border: var(--border); display: block; margin: 0 auto 10px; image-rendering: pixelated; object-fit: cover; }
+        
+        .main-content { display: none; } /* 名前決定まで非表示 */
+        
+        .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin: 20px 0; }
+        .char-card { background: var(--card); border: var(--border); padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        .char-info { text-align: center; margin-bottom: 10px; }
+        .char-icon { width: 55px; height: 55px; border: 1px solid #555; background: #333; image-rendering: pixelated; margin-bottom: 5px; }
+        
+        .heart-gauge { display: flex; gap: 3px; margin: 5px 0; }
+        .heart-btn { background: none; border: none; font-size: 20px; cursor: pointer; filter: grayscale(1); opacity: 0.3; padding: 0; }
         .heart-btn.active { filter: grayscale(0); opacity: 1; }
+        
         input[type="text"], textarea, select { width: 100%; background: #1a1a1a; color: #fff; border: 1px solid #555; padding: 8px; box-sizing: border-box; }
         details { border: 1px solid #444; background: #222; margin-top: 10px; padding: 10px; }
         summary { cursor: pointer; color: var(--accent); font-weight: bold; }
-        .checkbox-list { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px 0; }
+        .checkbox-list { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0; }
+        
         .btn-save { display: block; width: 100%; padding: 15px; background: var(--accent); color: #fff; font-weight: bold; border: none; cursor: pointer; margin-top: 30px; }
-        .btn-save:disabled { background: #666; cursor: not-allowed; }
-        .deadline { text-align: right; color: var(--accent); font-weight: bold; }
+        .btn-save:disabled { background: #666; }
+        .deadline { text-align: right; color: var(--accent); font-weight: bold; font-size: 0.8em; }
+
+        @media (max-width: 600px) {
+            .char-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="user-header">
-        <img src="via.placeholder.com" class="user-icon">
-        <h2>ABCDE</h2>
-        <p class="deadline">期日：2025/1/12 21:00まで</p>
+    <!-- 名前設定画面 -->
+    <div id="setupArea" class="setup-section">
+        <h3>あなたの名前を入力してください</h3>
+        <input type="text" id="myInputName" placeholder="名前を入力...">
+        <button class="btn-save" onclick="startTool()" style="margin-top:0;">ツールを開始する</button>
     </div>
 
-    <div id="charGrid" class="char-grid"></div>
+    <!-- メインコンテンツ -->
+    <div id="mainArea" class="main-content">
+        <div class="header">
+            <img src="via.placeholder.com" class="user-icon">
+            <h2 id="displayName">---</h2>
+            <p class="deadline">〆切：2025/1/12 21:00</p>
+            <button onclick="resetUser()" style="background:none; border:none; color:#888; font-size:0.7em; cursor:pointer;">[名前を変更する]</button>
+        </div>
 
-    <div style="margin-top: 40px; border-top: 2px solid var(--accent); padding-top: 20px;">
-        <p>● この人のことは庇える（複数可）</p>
-        <details><summary>名前一覧を表示する</summary><div id="protectSelect" class="checkbox-list"></div></details>
-        <p>● この人を狙うかも（複数可）</p>
-        <details><summary>名前一覧を表示する</summary><div id="targetSelect" class="checkbox-list"></div></details>
-        <p>● この人がいなくなったらやばい（1名）</p>
-        <select id="criticalChar"><option value="">選択してください</option></select>
-        <p>● 現在の心情や状況など伝えたいこと</p>
-        <textarea id="freeNote" rows="4"></textarea>
-        <button class="btn-save" id="submitBtn" onclick="submitData()">スプレッドシートへ送信</button>
+        <div id="charGrid" class="char-grid"></div>
+
+        <div style="margin-top: 40px; border-top: 2px solid var(--accent); padding-top: 20px;">
+            <p>● この人のことは庇える（複数可）</p>
+            <details><summary>名前一覧を表示</summary><div id="protectSelect" class="checkbox-list"></div></details>
+            <p>● この人を狙うかも（複数可）</p>
+            <details><summary>名前一覧を表示</summary><div id="targetSelect" class="checkbox-list"></div></details>
+            <p>● この人がいなくなったらやばい</p>
+            <select id="criticalChar"><option value="">選択してください</option></select>
+            <p>● 現在の心情や状況</p>
+            <textarea id="freeNote" rows="4"></textarea>
+            <button class="btn-save" id="submitBtn" onclick="submitData()">スプレッドシートへ送信</button>
+        </div>
     </div>
 
 <script>
-    const characters = [
+    // 全メンバーリスト
+    const allMembers = [
         {name: "ファースト", job: "ロボット", img: "via.placeholder.com"},
         {name: "あいうえお", job: "探偵", img: "via.placeholder.com"},
         {name: "かきくけこ", job: "幸運", img: "via.placeholder.com"},
@@ -67,53 +94,76 @@
         {name: "わおん", job: "風紀委員", img: "via.placeholder.com1"}
     ];
 
-    function init() {
+    let myName = localStorage.getItem('app_user_name');
+
+    function startTool() {
+        const input = document.getElementById('myInputName').value.trim();
+        if(!input) return alert("名前を入力してください");
+        
+        myName = input;
+        localStorage.setItem('app_user_name', myName);
+        renderTool();
+    }
+
+    function resetUser() {
+        if(confirm("名前を変更すると入力内容がリセットされる可能性があります。よろしいですか？")) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
+
+    function renderTool() {
+        document.getElementById('setupArea').style.display = 'none';
+        document.getElementById('mainArea').style.display = 'block';
+        document.querySelector('.header').style.display = 'block';
+        document.getElementById('displayName').innerText = myName;
+
         const grid = document.getElementById('charGrid');
         const protect = document.getElementById('protectSelect');
         const target = document.getElementById('targetSelect');
         const critical = document.getElementById('criticalChar');
 
-        // GitHub Pagesのドメインで永続保存されるデータ
-        const savedStats = JSON.parse(localStorage.getItem('saved_char_stats') || '{}');
+        grid.innerHTML = ''; protect.innerHTML = ''; target.innerHTML = '';
+        critical.innerHTML = '<option value="">選択してください</option>';
 
-        characters.forEach((char, idx) => {
+        const savedStats = JSON.parse(localStorage.getItem('stats_'+myName) || '{}');
+
+        // 自分以外のメンバーを抽出
+        const others = allMembers.filter(m => m.name !== myName);
+
+        others.forEach((char, idx) => {
             const data = savedStats[char.name] || { hearts: 3, comment: "" };
-            
             let heartsHtml = '';
             for(let i=1; i<=5; i++) {
-                const activeClass = i <= data.hearts ? 'active' : '';
-                heartsHtml += `<button class="heart-btn ${activeClass}" onclick="setHeart(${idx}, ${i})">❤️</button>`;
+                heartsHtml += `<button class="heart-btn ${i <= data.hearts ? 'active' : ''}" onclick="setHeart('${char.name}', ${i})">❤️</button>`;
             }
 
             grid.innerHTML += `
                 <div class="char-card">
+                    <img src="${char.img}" class="char-icon">
                     <div class="char-info">
-                        <img src="${char.img}" class="char-icon">
-                        <div>
-                            <div style="font-weight:bold;">${char.name}</div>
-                            <div style="font-size:0.8em; color:#888;">${char.job}</div>
-                        </div>
+                        <div style="font-weight:bold; font-size:0.9em;">${char.name}</div>
                     </div>
-                    <div class="heart-gauge" id="gauge-${idx}" data-value="${data.hearts}">${heartsHtml}</div>
-                    <input type="text" id="comm-${idx}" value="${data.comment || ''}" placeholder="一言コメント" oninput="saveCurrentData()">
+                    <div class="heart-gauge" id="gauge-${char.name}" data-value="${data.hearts}">${heartsHtml}</div>
+                    <input type="text" id="comm-${char.name}" value="${data.comment}" placeholder="一言" oninput="saveCurrentData()">
                 </div>`;
 
             const cb = (type) => {
-                const isChecked = (localStorage.getItem('checked_'+type) || "").split(',').includes(char.name);
+                const isChecked = (localStorage.getItem('checked_'+type+'_'+myName) || "").split(',').includes(char.name);
                 return `<label style="margin-right:10px;"><input type="checkbox" name="${type}" value="${char.name}" ${isChecked ? "checked" : ""} onchange="saveCurrentData()"> ${char.name}</label>`;
             };
             protect.innerHTML += cb('protect');
             target.innerHTML += cb('target');
-            critical.innerHTML += `<option value="${char.name}" ${localStorage.getItem('critical') === char.name ? 'selected' : ''}>${char.name}</option>`;
+            critical.innerHTML += `<option value="${char.name}" ${localStorage.getItem('critical_'+myName) === char.name ? 'selected' : ''}>${char.name}</option>`;
         });
 
-        document.getElementById('freeNote').value = localStorage.getItem('freeNote') || "";
+        document.getElementById('freeNote').value = localStorage.getItem('note_'+myName) || "";
         critical.onchange = saveCurrentData;
         document.getElementById('freeNote').oninput = saveCurrentData;
     }
 
-    function setHeart(idx, val) {
-        const gauge = document.getElementById('gauge-'+idx);
+    function setHeart(name, val) {
+        const gauge = document.getElementById('gauge-'+name);
         gauge.dataset.value = val;
         const btns = gauge.querySelectorAll('.heart-btn');
         btns.forEach((b, i) => b.classList.toggle('active', i < val));
@@ -122,38 +172,39 @@
 
     function saveCurrentData() {
         const dataMap = {};
-        characters.forEach((c, idx) => {
-            dataMap[c.name] = {
-                hearts: document.getElementById('gauge-'+idx).dataset.value,
-                comment: document.getElementById('comm-'+idx).value
-            };
+        allMembers.forEach(c => {
+            const g = document.getElementById('gauge-'+c.name);
+            const m = document.getElementById('comm-'+c.name);
+            if(g && m) {
+                dataMap[c.name] = { hearts: g.dataset.value, comment: m.value };
+            }
         });
-        localStorage.setItem('saved_char_stats', JSON.stringify(dataMap));
-        localStorage.setItem('checked_protect', Array.from(document.querySelectorAll('input[name="protect"]:checked')).map(el => el.value).join(','));
-        localStorage.setItem('checked_target', Array.from(document.querySelectorAll('input[name="target"]:checked')).map(el => el.value).join(','));
-        localStorage.setItem('critical', document.getElementById('criticalChar').value);
-        localStorage.setItem('freeNote', document.getElementById('freeNote').value);
+        localStorage.setItem('stats_'+myName, JSON.stringify(dataMap));
+        localStorage.setItem('checked_protect_'+myName, Array.from(document.querySelectorAll('input[name="protect"]:checked')).map(el => el.value).join(','));
+        localStorage.setItem('checked_target_'+myName, Array.from(document.querySelectorAll('input[name="target"]:checked')).map(el => el.value).join(','));
+        localStorage.setItem('critical_'+myName, document.getElementById('criticalChar').value);
+        localStorage.setItem('note_'+myName, document.getElementById('freeNote').value);
     }
 
     async function submitData() {
         const btn = document.getElementById('submitBtn');
-        btn.innerText = "送信中...";
-        btn.disabled = true;
+        btn.innerText = "送信中..."; btn.disabled = true;
 
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyPbjT11UkxVNJEz6g_NGLW-5dOLlhRX2OurY1bDgvhn4KuGqip72dDiT5lEImCpAfY/exec";
+        const GAS_URL = "script.google.com";
         
-        const charData = characters.map((c, idx) => ({
+        const others = allMembers.filter(m => m.name !== myName);
+        const charData = others.map(c => ({
             name: c.name,
-            hearts: document.getElementById('gauge-'+idx).dataset.value,
-            comment: document.getElementById('comm-'+idx).value
+            hearts: document.getElementById('gauge-'+c.name).dataset.value,
+            comment: document.getElementById('comm-'+c.name).value
         }));
 
         const data = {
-            user: "ABCDE",
+            user: myName,
             timestamp: new Date().toLocaleString('ja-JP'),
             characters: charData,
-            canProtect: (localStorage.getItem('checked_protect') || "").split(',').filter(v => v),
-            mayTarget: (localStorage.getItem('checked_target') || "").split(',').filter(v => v),
+            canProtect: (localStorage.getItem('checked_protect_'+myName) || "").split(',').filter(v => v),
+            mayTarget: (localStorage.getItem('checked_target_'+myName) || "").split(',').filter(v => v),
             critical: document.getElementById('criticalChar').value,
             note: document.getElementById('freeNote').value
         };
@@ -161,14 +212,11 @@
         try {
             await fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(data) });
             alert("送信に成功しました！");
-        } catch (e) {
-            alert("送信エラーが発生しました。");
-        } finally {
-            btn.innerText = "スプレッドシートへ送信";
-            btn.disabled = false;
-        }
+        } catch (e) { alert("エラーが発生しました"); }
+        finally { btn.innerText = "スプレッドシートへ送信"; btn.disabled = false; }
     }
-    window.onload = init;
+
+    window.onload = () => { if(myName) renderTool(); };
 </script>
 </body>
 </html>
