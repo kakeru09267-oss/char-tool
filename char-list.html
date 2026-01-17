@@ -55,7 +55,7 @@
 
     <!-- 名前設定画面 -->
     <div id="setupArea" class="setup-section">
-        <h3>あなたの名前を入力してください</h3>
+        <h3>あなたの名前を全角カタカナフルネームで入力してください</h3>
         <input type="text" id="myInputName" placeholder="名前を入力...">
         <button class="btn-save" onclick="startTool()" style="margin-top:0;">ツールを開始する</button>
     </div>
@@ -94,17 +94,17 @@
 
 <script>
     const allMembers = [
-        {name: "ファースト", job: "ロボット", img: "via.placeholder.com"},
-        {name: "あいうえお", job: "探偵", img: "via.placeholder.com"},
-        {name: "かきくけこ", job: "幸運", img: "via.placeholder.com"},
-        {name: "さしすせそ", job: "野球部", img: "via.placeholder.com"},
-        {name: "たちつてと", job: "アイドル", img: "via.placeholder.com"},
-        {name: "なにぬねの", job: "小説家", img: "via.placeholder.com"},
-        {name: "はひふへほ", job: "御囚司", img: "via.placeholder.com"},
-        {name: "まみむめも", job: "保健委員", img: "via.placeholder.com"},
-        {name: "やゆよ", job: "占い師", img: "via.placeholder.com"},
-        {name: "らりるれろ", job: "プログラマー", img: "via.placeholder.com0"},
-        {name: "わおん", job: "風紀委員", img: "via.placeholder.com1"}
+        {name: "ファースト", job: "ロボット", img: "firsticon"},
+        {name: "あいうえお", job: "探偵", img: "kari.png"},
+        {name: "かきくけこ", job: "幸運", img: "kari.png"},
+        {name: "さしすせそ", job: "野球部", img: "kari.png"},
+        {name: "たちつてと", job: "アイドル", img: "kari.png"},
+        {name: "なにぬねの", job: "小説家", img: "kari.png"},
+        {name: "はひふへほ", job: "御囚司", img: "kari.png"},
+        {name: "まみむめも", job: "保健委員", img: "kari.png"},
+        {name: "やゆよ", job: "占い師", img: "kari.png"},
+        {name: "らりるれろ", job: "プログラマー", img: "kari.png"},
+        {name: "わおん", job: "風紀委員", img: "kari.png"}
     ];
 
     let myName = localStorage.getItem('app_user_name');
@@ -234,3 +234,4 @@
 </script>
 </body>
 </html>
+
