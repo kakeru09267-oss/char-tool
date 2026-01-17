@@ -191,26 +191,41 @@
         localStorage.setItem('global_' + myName, JSON.stringify(globalData));
     }
 
-   function submitData() {
-        saveLocalData(); // まずブラウザに最新状態を保存
+ function submitData() {
+        saveLocalData(); 
         
         const btn = document.getElementById('submitBtn');
-        btn.disabled = true; // 二重送信防止
+        btn.disabled = true;
         btn.innerText = "送信中...";
 
-        // 送信するデータの塊を作成
+        // --- GAS側の変数名（data.user, data.characters等）に合わせて整形 ---
+        const savedStats = JSON.parse(localStorage.getItem('stats_' + myName) || '{}');
+        const savedGlobal = JSON.parse(localStorage.getItem('global_' + myName) || '{"protect":[], "target":[], "critical":"", "note":""}');
+
+        // キャラクターごとの詳細データをGASの想定形式に変換
+        const charDetails = Object.keys(savedStats).map(name => {
+            return {
+                name: name,
+                hearts: savedStats[name].hearts,
+                comment: savedStats[name].comment
+            };
+        });
+
         const payload = {
-            userName: myName,
-            stats: JSON.parse(localStorage.getItem('stats_' + myName)),
-            global: JSON.parse(localStorage.getItem('global_' + myName))
+            timestamp: new Date().toLocaleString('ja-JP'), // data.timestamp
+            user: myName,                                  // data.user
+            canProtect: savedGlobal.protect,               // data.canProtect
+            mayTarget: savedGlobal.target,                 // data.mayTarget
+            critical: savedGlobal.critical,                // data.critical
+            note: savedGlobal.note,                        // data.note
+            characters: charDetails                        // data.characters
         };
 
-        // ★★★ Google Apps Scriptで発行したURLをここに貼り付けてください ★★★
         const GAS_URL = "https://script.google.com/macros/s/AKfycbyPbjT11UkxVNJEz6g_NGLW-5dOLlhRX2OurY1bDgvhn4KuGqip72dDiT5lEImCpAfY/exec";
 
         fetch(GAS_URL, {
             method: "POST",
-            mode: "no-cors", // CORSエラーを回避して送信
+            mode: "no-cors", 
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         })
@@ -221,7 +236,7 @@
         })
         .catch(err => {
             console.error(err);
-            showAppAlert("エラーが発生しました。URLが正しいか確認してください。");
+            showAppAlert("送信エラーが発生しました。");
             btn.disabled = false;
             btn.innerText = "送信";
         });
@@ -230,6 +245,7 @@
 </script>
 </body>
 </html>
+
 
 
 
