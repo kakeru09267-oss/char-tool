@@ -135,6 +135,14 @@
         document.getElementById('mainArea').style.display = 'block';
         document.querySelector('.header').style.display = 'block';
         document.getElementById('displayName').innerText = myName;
+    // --- ログインユーザーの画像を表示 ---
+        const userIconImg = document.querySelector('.user-icon');
+        const currentUser = allMembers.find(m => m.name === myName);
+        if (currentUser) {
+            userIconImg.src = currentUser.img; // リストにある画像URLを適用
+        } else {
+            userIconImg.src = "https://placehold.jp？"; // 見つからない場合
+        }
 
         const grid = document.getElementById('charGrid');
         const protect = document.getElementById('protectSelect');
@@ -202,4 +210,5 @@
 </script>
 </body>
 </html>
+
 
