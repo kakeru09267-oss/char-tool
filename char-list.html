@@ -191,13 +191,44 @@
         localStorage.setItem('global_' + myName, JSON.stringify(globalData));
     }
 
-    function submitData() {
-        saveLocalData();
-        showAppAlert("送信しました！");
-    }
+   function submitData() {
+        saveLocalData(); // まずブラウザに最新状態を保存
+        
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true; // 二重送信防止
+        btn.innerText = "送信中...";
 
+        // 送信するデータの塊を作成
+        const payload = {
+            userName: myName,
+            stats: JSON.parse(localStorage.getItem('stats_' + myName)),
+            global: JSON.parse(localStorage.getItem('global_' + myName))
+        };
+
+        // ★★★ Google Apps Scriptで発行したURLをここに貼り付けてください ★★★
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyPbjT11UkxVNJEz6g_NGLW-5dOLlhRX2OurY1bDgvhn4KuGqip72dDiT5lEImCpAfY/exec";
+
+        fetch(GAS_URL, {
+            method: "POST",
+            mode: "no-cors", // CORSエラーを回避して送信
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        })
+        .then(() => {
+            showAppAlert("送信が完了しました！");
+            btn.disabled = false;
+            btn.innerText = "データを保存/送信";
+        })
+        .catch(err => {
+            console.error(err);
+            showAppAlert("エラーが発生しました。URLが正しいか確認してください。");
+            btn.disabled = false;
+            btn.innerText = "データを保存/送信";
+        });
+    }
     if(myName) renderTool();
 </script>
 </body>
 </html>
+
 
