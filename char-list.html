@@ -147,19 +147,40 @@
     }
 
     function setHeart(name, val) {
+        // 1. 内部データの値を更新
         const gauge = document.getElementById(`gauge-${name}`);
         gauge.setAttribute('data-value', val);
-        renderTool(); // 再描画して状態を確定
+
+        // 2. 見た目（❤️の赤色）を即座に切り替え
+        const btns = gauge.querySelectorAll('.heart-btn');
+        btns.forEach((btn, i) => {
+            if (i < val) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // 3. ローカルストレージに保存
         saveLocalData();
     }
 
-    function saveLocalData() {
+
+       function saveLocalData() {
+        if (!myName) return;
+
         const stats = {};
         allMembers.filter(m => m.name !== myName).forEach(char => {
             const g = document.getElementById(`gauge-${char.name}`);
-            if(g) stats[char.name] = { hearts: parseInt(g.getAttribute('data-value')), comment: document.getElementById(`comm-${char.name}`).value };
+            const c = document.getElementById(`comm-${char.name}`);
+            if (g && c) {
+                stats[char.name] = { 
+                    hearts: parseInt(g.getAttribute('data-value')), 
+                    comment: c.value 
+                };
+            }
         });
-        localStorage.setItem('stats_'+myName, JSON.stringify(stats));
+        localStorage.setItem('stats_' + myName, JSON.stringify(stats));
 
         const globalData = {
             protect: Array.from(document.querySelectorAll('input[name="protect"]:checked')).map(el => el.value),
@@ -167,7 +188,7 @@
             critical: document.getElementById('criticalChar').value,
             note: document.getElementById('freeNote').value
         };
-        localStorage.setItem('global_'+myName, JSON.stringify(globalData));
+        localStorage.setItem('global_' + myName, JSON.stringify(globalData));
     }
 
     function submitData() {
@@ -179,3 +200,4 @@
 </script>
 </body>
 </html>
+
