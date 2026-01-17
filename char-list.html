@@ -10,46 +10,31 @@
             --card: #2b2b2b;
             --accent: #ff4500;
             --text: #e0e0e0;
-            --sub-text: #aaaaaa; /* サブテキスト用に追加 */
+            --sub-text: #aaaaaa;
             --border: 2px solid #444;
         }
         body { font-family: sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; max-width: 800px; margin: auto; }
-        
-        /* 名前入力セクション */
         .setup-section { text-align: center; padding: 40px 20px; border: var(--border); background: var(--card); margin-bottom: 20px; }
         .setup-section input { width: 80%; max-width: 300px; font-size: 1.2em; text-align: center; margin-bottom: 20px; }
-        
         .header { text-align: center; margin-bottom: 30px; display: none; }
         .user-icon { width: 80px; height: 80px; background: #444; border: var(--border); display: block; margin: 0 auto 10px; image-rendering: pixelated; object-fit: cover; }
-        
         .main-content { display: none; }
-        
         .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin: 20px 0; }
         .char-card { background: var(--card); border: var(--border); padding: 10px; display: flex; flex-direction: column; align-items: center; }
-        .char-info { text-align: center; margin-bottom: 10px; }
         .char-icon { width: 55px; height: 55px; border: 1px solid #555; background: #333; image-rendering: pixelated; margin-bottom: 5px; }
-        
         .heart-gauge { display: flex; gap: 3px; margin: 5px 0; }
         .heart-btn { background: none; border: none; font-size: 20px; cursor: pointer; filter: grayscale(1); opacity: 0.3; padding: 0; }
         .heart-btn.active { filter: grayscale(0); opacity: 1; }
-        
         input[type="text"], textarea, select { width: 100%; background: #1a1a1a; color: #fff; border: 1px solid #555; padding: 8px; box-sizing: border-box; }
         details { border: 1px solid #444; background: #222; margin-top: 10px; padding: 10px; }
         summary { cursor: pointer; color: var(--accent); font-weight: bold; }
         .checkbox-list { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0; }
-        
         .btn-save { display: block; width: 100%; padding: 15px; background: var(--accent); color: #fff; font-weight: bold; border: none; cursor: pointer; margin-top: 30px; }
-        .btn-save:disabled { background: #666; cursor: wait; }
         .deadline { text-align: right; color: var(--accent); font-weight: bold; font-size: 0.8em; }
-
-        /* カスタムアラート */
         #customAlert { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; }
-        .alert-box { background: var(--card); border: 2px solid var(--accent); padding: 30px; text-align: center; width: 80%; max-width: 300px; box-shadow: 0 0 20px rgba(255, 69, 0, 0.4); }
+        .alert-box { background: var(--card); border: 2px solid var(--accent); padding: 30px; text-align: center; width: 80%; max-width: 300px; }
         .alert-btn { background: var(--accent); color: white; border: none; padding: 10px 30px; font-weight: bold; cursor: pointer; margin-top: 20px; }
-
-        @media (max-width: 600px) {
-            .char-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        }
+        @media (max-width: 600px) { .char-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
     </style>
 </head>
 <body>
@@ -57,38 +42,33 @@
     <div id="setupArea" class="setup-section">
         <h3>あなたの名前を全角カタカナフルネームで入力してください</h3>
         <input type="text" id="myInputName" placeholder="名前を入力...">
-        <button class="btn-save" onclick="startTool()" style="margin-top:0;">ツールを開始する</button>
+        <button class="btn-save" onclick="startTool()" style="margin-top:0;">好感度入力を始める</button>
     </div>
 
     <div id="mainArea" class="main-content">
         <div class="header">
-            <img src="via.placeholder.com" class="user-icon">
+            <img src="" class="user-icon" id="headerIcon">
             <h2 id="displayName">---</h2>
             <p class="deadline">〆切：2025/1/12 21:00</p>
-            <button onclick="resetUser()" style="background:none; border:none; color:#888; font-size:0.7em; cursor:pointer;">[名前を変更・リセット]</button>
+            <button onclick="resetUser()" style="background:none; border:none; color:#888; font-size:0.7em; cursor:pointer;">[リセット]</button>
         </div>
 
         <div id="charGrid" class="char-grid"></div>
 
         <div style="margin-top: 40px; border-top: 2px solid var(--accent); padding-top: 20px;">
-            <p>● この人のことは庇える（複数可）</p>
+            <p>● この人のことは庇える</p>
             <details><summary>名前一覧を表示</summary><div id="protectSelect" class="checkbox-list"></div></details>
-            <p>● この人を狙うかも（複数可）</p>
+            <p>● この人を狙うかも</p>
             <details><summary>名前一覧を表示</summary><div id="targetSelect" class="checkbox-list"></div></details>
             <p>● この人がいなくなったらやばい</p>
-            <select id="criticalChar"><option value="">選択してください</option></select>
+            <select id="criticalChar" onchange="saveLocalData()"><option value="">選択してください</option></select>
             <p>● 現在の心情や状況</p>
-            <textarea id="freeNote" rows="4"></textarea>
-            <button class="btn-save" id="submitBtn" onclick="submitData()">送信</button>
+            <textarea id="freeNote" rows="4" oninput="saveLocalData()"></textarea>
+            <button class="btn-save" id="submitBtn" onclick="submitData()">データを保存/送信</button>
         </div>
     </div>
 
-    <div id="customAlert">
-        <div class="alert-box">
-            <p id="alertMessage" style="font-weight:bold;"></p>
-            <button class="alert-btn" onclick="closeAlert()">OK</button>
-        </div>
-    </div>
+    <div id="customAlert"><div class="alert-box"><p id="alertMessage" style="font-weight:bold;"></p><button class="alert-btn" onclick="closeAlert()">OK</button></div></div>
 
 <script>
     const allMembers = [
@@ -98,7 +78,7 @@
         {name: "さしすせそ", job: "野球部", img: "kari.png"},
         {name: "たちつてと", job: "アイドル", img: "kari.png"},
         {name: "なにぬねの", job: "小説家", img: "kari.png"},
-        {name: "はひふへほ", job: "御囚司", img: "kari.png"},
+        {name: "はひふへほ", job: "御曹司", img: "kari.png"},
         {name: "まみむめも", job: "保健委員", img: "kari.png"},
         {name: "やゆよ", job: "占い師", img: "kari.png"},
         {name: "らりるれろ", job: "プログラマー", img: "kari.png"},
@@ -111,9 +91,7 @@
         document.getElementById('alertMessage').innerText = msg;
         document.getElementById('customAlert').style.display = 'flex';
     }
-    function closeAlert() {
-        document.getElementById('customAlert').style.display = 'none';
-    }
+    function closeAlert() { document.getElementById('customAlert').style.display = 'none'; }
 
     function startTool() {
         const input = document.getElementById('myInputName').value.trim();
@@ -124,10 +102,7 @@
     }
 
     function resetUser() {
-        if(confirm("名前を変更すると入力内容がリセットされる可能性があります。よろしいですか？")) {
-            localStorage.clear();
-            location.reload();
-        }
+        if(confirm("リセットしますか？")) { localStorage.clear(); location.reload(); }
     }
 
     function renderTool() {
@@ -135,80 +110,72 @@
         document.getElementById('mainArea').style.display = 'block';
         document.querySelector('.header').style.display = 'block';
         document.getElementById('displayName').innerText = myName;
-    // --- ログインユーザーの画像を表示 ---
-        const userIconImg = document.querySelector('.user-icon');
+
         const currentUser = allMembers.find(m => m.name === myName);
-        if (currentUser) {
-            userIconImg.src = currentUser.img; // リストにある画像URLを適用
-        } else {
-            userIconImg.src = "https://placehold.jp？"; // 見つからない場合
-        }
+        if(currentUser) document.getElementById('headerIcon').src = currentUser.img;
 
         const grid = document.getElementById('charGrid');
         const protect = document.getElementById('protectSelect');
         const target = document.getElementById('targetSelect');
         const critical = document.getElementById('criticalChar');
 
+        const savedStats = JSON.parse(localStorage.getItem('stats_'+myName) || '{}');
+        const savedGlobal = JSON.parse(localStorage.getItem('global_'+myName) || '{"protect":[], "target":[], "critical":"", "note":""}');
+
         grid.innerHTML = ''; protect.innerHTML = ''; target.innerHTML = '';
         critical.innerHTML = '<option value="">選択してください</option>';
 
-        const savedStats = JSON.parse(localStorage.getItem('stats_'+myName) || '{}');
-        const others = allMembers.filter(m => m.name !== myName);
-
-        others.forEach((char, idx) => {
+        allMembers.filter(m => m.name !== myName).forEach(char => {
             const data = savedStats[char.name] || { hearts: 3, comment: "" };
             let heartsHtml = '';
-            for(let i=1; i<=5; i++) {
-                heartsHtml += `<button class="heart-btn ${i <= data.hearts ? 'active' : ''}" onclick="setHeart('${char.name}', ${i})">❤️</button>`;
-            }
+            for(let i=1; i<=5; i++) heartsHtml += `<button class="heart-btn ${i <= data.hearts ? 'active' : ''}" onclick="setHeart('${char.name}', ${i})">❤️</button>`;
 
-            // 修正箇所：名前の下に job を追加
             grid.innerHTML += `
                 <div class="char-card">
                     <img src="${char.img}" class="char-icon">
                     <div style="font-weight:bold; font-size:0.9em;">${char.name}</div>
-                    <div style="font-size:0.7em; color:var(--sub-text); margin-bottom:5px; opacity:0.8;">${char.job}</div>
+                    <div style="font-size:0.7em; color:var(--sub-text); margin-bottom:5px;">${char.job}</div>
                     <div class="heart-gauge" id="gauge-${char.name}" data-value="${data.hearts}">${heartsHtml}</div>
-                    <input type="text" id="comm-${char.name}" value="${data.comment || ''}" placeholder="一言メモ..." oninput="saveLocalData()">
-                </div>
-            `;
+                    <input type="text" id="comm-${char.name}" value="${data.comment || ''}" placeholder="一言..." oninput="saveLocalData()">
+                </div>`;
 
-            protect.innerHTML += `<label style="display:block; padding:5px;"><input type="checkbox" name="protect" value="${char.name}"> ${char.name}</label>`;
-            target.innerHTML += `<label style="display:block; padding:5px;"><input type="checkbox" name="target" value="${char.name}"> ${char.name}</label>`;
-            critical.innerHTML += `<option value="${char.name}">${char.name}</option>`;
+            protect.innerHTML += `<label style="display:block; padding:5px;"><input type="checkbox" name="protect" value="${char.name}" ${savedGlobal.protect.includes(char.name)?'checked':''} onchange="saveLocalData()"> ${char.name}</label>`;
+            target.innerHTML += `<label style="display:block; padding:5px;"><input type="checkbox" name="target" value="${char.name}" ${savedGlobal.target.includes(char.name)?'checked':''} onchange="saveLocalData()"> ${char.name}</label>`;
+            critical.innerHTML += `<option value="${char.name}" ${savedGlobal.critical === char.name ? 'selected' : ''}>${char.name}</option>`;
         });
+        document.getElementById('freeNote').value = savedGlobal.note;
     }
 
     function setHeart(name, val) {
         const gauge = document.getElementById(`gauge-${name}`);
         gauge.setAttribute('data-value', val);
-        const btns = gauge.querySelectorAll('.heart-btn');
-        btns.forEach((btn, i) => {
-            if(i < val) btn.classList.add('active');
-            else btn.classList.remove('active');
-        });
+        renderTool(); // 再描画して状態を確定
         saveLocalData();
     }
 
     function saveLocalData() {
         const stats = {};
-        const others = allMembers.filter(m => m.name !== myName);
-        others.forEach(char => {
-            stats[char.name] = {
-                hearts: parseInt(document.getElementById(`gauge-${char.name}`).getAttribute('data-value')),
-                comment: document.getElementById(`comm-${char.name}`).value
-            };
+        allMembers.filter(m => m.name !== myName).forEach(char => {
+            const g = document.getElementById(`gauge-${char.name}`);
+            if(g) stats[char.name] = { hearts: parseInt(g.getAttribute('data-value')), comment: document.getElementById(`comm-${char.name}`).value };
         });
         localStorage.setItem('stats_'+myName, JSON.stringify(stats));
+
+        const globalData = {
+            protect: Array.from(document.querySelectorAll('input[name="protect"]:checked')).map(el => el.value),
+            target: Array.from(document.querySelectorAll('input[name="target"]:checked')).map(el => el.value),
+            critical: document.getElementById('criticalChar').value,
+            note: document.getElementById('freeNote').value
+        };
+        localStorage.setItem('global_'+myName, JSON.stringify(globalData));
     }
 
     function submitData() {
-        showAppAlert("データ送信完了！");
+        saveLocalData();
+        showAppAlert("送信しました！");
     }
 
     if(myName) renderTool();
 </script>
 </body>
 </html>
-
-
