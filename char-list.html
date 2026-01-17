@@ -217,18 +217,19 @@
         .then(() => {
             showAppAlert("送信が完了しました！");
             btn.disabled = false;
-            btn.innerText = "データを保存/送信";
+            btn.innerText = "送信";
         })
         .catch(err => {
             console.error(err);
             showAppAlert("エラーが発生しました。URLが正しいか確認してください。");
             btn.disabled = false;
-            btn.innerText = "データを保存/送信";
+            btn.innerText = "送信";
         });
     }
     if(myName) renderTool();
 </script>
 </body>
 </html>
+
 
 
